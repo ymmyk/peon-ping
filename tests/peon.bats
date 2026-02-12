@@ -504,6 +504,18 @@ json.dump(c, open('$TEST_DIR/config.json', 'w'), indent=2)
   [[ "$output" == *"peon --help"* ]]
 }
 
+@test "no arguments on a TTY shows usage hint and exits" {
+  # 'script' allocates a pseudo-TTY so stdin is not a pipe
+  if [[ "$(uname)" == "Darwin" ]]; then
+    run script -q /dev/null bash "$PEON_SH"
+  else
+    run script -qc "bash '$PEON_SH'" /dev/null
+  fi
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Usage:"* ]]
+  [[ "$output" == *"--help"* ]]
+}
+
 # ============================================================
 # Pack rotation
 # ============================================================

@@ -433,6 +433,15 @@ HELPEOF
     echo "Run 'peon --help' for usage." >&2; exit 1 ;;
 esac
 
+# If no CLI arg was given and stdin is a terminal (not a pipe from Claude Code),
+# the user likely ran `peon` bare — show help instead of blocking on cat.
+if [ -t 0 ]; then
+  echo "Usage: peon <command>"
+  echo ""
+  echo "Run 'peon --help' for full command list."
+  exit 0
+fi
+
 INPUT=$(cat)
 
 # Debug log (uncomment to troubleshoot)

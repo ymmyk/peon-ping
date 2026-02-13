@@ -2,7 +2,7 @@
 # peon-ping adapter for Windsurf IDE (Cascade hooks)
 # Translates Windsurf hook events into peon.sh stdin JSON
 #
-# Setup: Add to ~/.codeium/windsurf/hooks.json:
+# Setup: Add to ~/.codeium/windsurf/hooks.json (see README for full hooks.json):
 #   {
 #     "hooks": {
 #       "post_cascade_response": [
@@ -10,12 +10,6 @@
 #       ],
 #       "pre_user_prompt": [
 #         { "command": "bash ~/.claude/hooks/peon-ping/adapters/windsurf.sh pre_user_prompt", "show_output": false }
-#       ],
-#       "post_write_code": [
-#         { "command": "bash ~/.claude/hooks/peon-ping/adapters/windsurf.sh post_write_code", "show_output": false }
-#       ],
-#       "post_run_command": [
-#         { "command": "bash ~/.claude/hooks/peon-ping/adapters/windsurf.sh post_run_command", "show_output": false }
 #       ]
 #     }
 #   }
@@ -29,6 +23,7 @@ WINDSURF_EVENT="${1:-post_cascade_response}"
 # Drain stdin (Windsurf sends JSON context we don't need)
 cat > /dev/null
 
+# Map Windsurf hook events to peon.sh PascalCase events
 case "$WINDSURF_EVENT" in
   post_cascade_response)
     EVENT="Stop"
@@ -43,6 +38,7 @@ case "$WINDSURF_EVENT" in
     EVENT="Stop"
     ;;
   *)
+    # Unknown event — skip
     exit 0
     ;;
 esac

@@ -47,7 +47,7 @@ case "$OC_EVENT" in
     EVENT="UserPromptSubmit"
     ;;
   task.error|error|fail|crash|build.failed)
-    EVENT="Stop"
+    EVENT="PostToolUseFailure"
     ;;
   input.required|permission|input|waiting|blocked|approval)
     EVENT="Notification"
@@ -71,7 +71,7 @@ case "$OC_EVENT" in
     ;;
 
   # Also accept raw Claude Code hook event names
-  SessionStart|Stop|Notification|UserPromptSubmit|PermissionRequest)
+  SessionStart|Stop|Notification|UserPromptSubmit|PermissionRequest|PostToolUseFailure|SubagentStart|SessionEnd)
     EVENT="$OC_EVENT"
     ;;
   *)

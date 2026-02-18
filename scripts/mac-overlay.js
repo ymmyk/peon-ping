@@ -3,8 +3,13 @@
 // Usage: osascript -l JavaScript mac-overlay.js <message> <color> <icon_path> <slot> <dismiss_seconds>
 //
 // Creates a borderless, always-on-top overlay on every screen.
-// Click the banner to focus the source window.
 // Dismisses automatically after <dismiss_seconds> seconds.
+//
+// TODO: click-to-focus — attempted but reliable multi-window targeting
+// without Accessibility permission proved difficult. Options to revisit:
+//   - Accessibility permission + AXRaise on specific window
+//   - Cursor deep link / URL scheme if Cursor exposes one
+//   - Track frontmost window ID via CGWindowListCopyWindowInfo at hook fire time
 
 ObjC.import('Cocoa');
 
@@ -14,26 +19,6 @@ function run(argv) {
   var iconPath = argv[2] || '';
   var slot     = parseInt(argv[3], 10) || 0;
   var dismiss  = parseFloat(argv[4]) || 4;
-  // argv[5]: IDE ancestor PID passed from peon.sh (targets the right window even when
-  // the user is in another app). Falls back to frontmost app if not provided.
-  var targetPID = parseInt(argv[5], 10) || 0;
-  if (targetPID === 0) {
-    var ws = $.NSWorkspace.sharedWorkspace;
-    var frontApp = ws.frontmostApplication;
-    targetPID = (frontApp && !frontApp.isNil()) ? frontApp.processIdentifier : 0;
-  }
-
-  function activateTarget() {
-    if (targetPID > 0) {
-      var script = 'tell application "System Events" to set frontmost of (first process whose unix id is ' + targetPID + ') to true';
-      var task = $.NSTask.alloc.init;
-      task.setLaunchPath('/usr/bin/osascript');
-      task.setArguments($(['-e', script]));
-      task.launch;
-      task.waitUntilExit;
-    }
-    $.NSApp.terminate(null);
-  }
 
   // Color map
   var r = 180/255, g = 0, b = 0;
@@ -72,7 +57,7 @@ function run(argv) {
     win.setBackgroundColor(bgColor);
     win.setAlphaValue(0.95);
     win.setLevel($.NSStatusWindowLevel);
-    // Clickable — NOT calling setIgnoresMouseEvents(true)
+    win.setIgnoresMouseEvents(true);
 
     win.setCollectionBehavior(
       $.NSWindowCollectionBehaviorCanJoinAllSpaces |
@@ -120,34 +105,9 @@ function run(argv) {
     label.cell.setWraps(false);
     contentView.addSubview(label);
 
-    // Hint label — bottom-center, small, semi-transparent
-    var hintFont = $.NSFont.systemFontOfSize(10);
-    var hintLabel = $.NSTextField.alloc.initWithFrame(
-      $.NSMakeRect(textX, 4, textWidth, 12)
-    );
-    hintLabel.setStringValue($('click to focus'));
-    hintLabel.setBezeled(false);
-    hintLabel.setDrawsBackground(false);
-    hintLabel.setEditable(false);
-    hintLabel.setSelectable(false);
-    var hintColor = $.NSColor.colorWithSRGBRedGreenBlueAlpha(1.0, 1.0, 1.0, 0.55);
-    hintLabel.setTextColor(hintColor);
-    hintLabel.setAlignment($.NSTextAlignmentCenter);
-    hintLabel.setFont(hintFont);
-    contentView.addSubview(hintLabel);
-
     win.orderFrontRegardless;
     windows.push(win);
   }
-
-  // Local monitor: click on the overlay → activate source window
-  var clickMonitor = $.NSEvent.addLocalMonitorForEventsMatchingMaskHandler(
-    $.NSEventMaskLeftMouseDown,
-    function(event) {
-      activateTarget();
-      return null; // consume the event
-    }
-  );
 
   // Auto-dismiss timer
   $.NSTimer.scheduledTimerWithTimeIntervalTargetSelectorUserInfoRepeats(

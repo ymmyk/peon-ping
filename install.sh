@@ -195,13 +195,12 @@ if [ ! -d "$BASE_DIR" ]; then
   if [ "$LOCAL_MODE" = true ]; then
     echo "Error: .claude/ not found in current directory. Is this a Claude Code project?"
     exit 1
-  elif [ "$PLATFORM" = "devcontainer" ] || [ "$PLATFORM" = "ssh" ]; then
-    # In devcontainers/SSH, Claude Code isn't installed locally - create the directory
-    echo "Creating $BASE_DIR for remote session..."
-    mkdir -p "$BASE_DIR"
   else
-    echo "Error: $BASE_DIR not found. Is Claude Code installed?"
-    exit 1
+    # ~/.claude doesn't exist yet — create it so peon-ping has a home.
+    # This is normal when using peon-ping with non-Claude-Code editors
+    # (e.g. GitHub Copilot, Cursor) where ~/.claude was never created.
+    echo "Creating $BASE_DIR..."
+    mkdir -p "$BASE_DIR"
   fi
 fi
 

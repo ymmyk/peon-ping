@@ -265,6 +265,16 @@ print('OK')
   rm -rf "$NO_CLAUDE_DIR"
 }
 
+@test "global install creates ~/.claude if it does not exist" {
+  # Simulate a machine where Claude Code was never installed (no ~/.claude)
+  FAKE_HOME="$(mktemp -d)"
+  run env HOME="$FAKE_HOME" CLAUDE_CONFIG_DIR="$FAKE_HOME/.claude" \
+    bash "$CLONE_DIR/install.sh"
+  [ "$status" -eq 0 ]
+  [ -d "$FAKE_HOME/.claude/hooks/peon-ping" ]
+  rm -rf "$FAKE_HOME"
+}
+
 @test "fresh install copies completions.fish" {
   bash "$CLONE_DIR/install.sh"
   [ -f "$INSTALL_DIR/completions.fish" ]
